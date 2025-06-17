@@ -4,4 +4,4 @@
 - Hangman Game：ハングマンゲーム
 - Snake Game：スネークゲーム
 - Breakout Game：ブロック崩しゲーム
-- Fighting Game：対戦ゲーム
+- Fighting Game：2D格闘ゲーム
