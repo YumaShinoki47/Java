@@ -15,7 +15,7 @@ public class Player {
     private boolean onGround;
     private boolean isAttacking;
     private int attackCooldown;
-    private final int ATTACK_COOLDOWN_MAX = 30;
+    private final int ATTACK_COOLDOWN_MAX = 25;
     
     // 特殊攻撃の硬直
     private boolean isSpecialAttacking;
@@ -26,7 +26,6 @@ public class Player {
     private boolean facingRight;
     private int animationFrame;
     private int walkAnimationFrame;  // 歩行専用のアニメーションフレーム
-    private int damageFlash;
     private boolean isMoving;
     private boolean wasMovingRight;  // 前フレームで右移動していたかを記録
     
@@ -63,6 +62,11 @@ public class Player {
     private BufferedImage jumpImage;
     private BufferedImage fireImage;
     private BufferedImage damagedImage;
+    private BufferedImage attackImage1;
+    private BufferedImage attackImage2;
+    private BufferedImage attackImage3;
+    private BufferedImage attackImage4;
+    private BufferedImage attackImage5;
     private boolean useImage;    public Player(double x, double y, Color color, String name) {
         this.x = x;
         this.y = y;
@@ -78,7 +82,6 @@ public class Player {
         this.facingRight = true;
         this.animationFrame = 0;
         this.walkAnimationFrame = 0;
-        this.damageFlash = 0;
         this.isMoving = false;
         this.wasMovingRight = false;
         
@@ -128,11 +131,6 @@ public class Player {
         animationFrame++;
         if (animationFrame > 60) animationFrame = 0;
         
-        // ダメージフラッシュの更新
-        if (damageFlash > 0) {
-            damageFlash--;
-        }
-        
         // 水平方向の摩擦
         velocityX *= 0.8;
         
@@ -170,26 +168,26 @@ public class Player {
     }
     
     public void moveLeft() {
-        if (!isSpecialAttacking && !isKnockedBack && !isInvulnerable) {
+        if (!isSpecialAttacking && !isKnockedBack && !isInvulnerable && !isAttacking) {
             velocityX = -MOVE_SPEED;
         }
     }
     
     public void moveRight() {
-        if (!isSpecialAttacking && !isKnockedBack && !isInvulnerable) {
+        if (!isSpecialAttacking && !isKnockedBack && !isInvulnerable && !isAttacking) {
             velocityX = MOVE_SPEED;
         }
     }
     
     public void jump() {
-        if (onGround && !isSpecialAttacking && !isKnockedBack && !isInvulnerable) {
+        if (onGround && !isSpecialAttacking && !isKnockedBack && !isInvulnerable && !isAttacking) {
             velocityY = JUMP_STRENGTH;
             onGround = false;
         }
     }
     
     public void attack(Player target) {
-        if (attackCooldown == 0 && !isSpecialAttacking && !isKnockedBack && !isInvulnerable) {
+        if (attackCooldown == 0 && !isSpecialAttacking && !isKnockedBack && !isInvulnerable && onGround) {
             isAttacking = true;
             attackCooldown = ATTACK_COOLDOWN_MAX;
             
@@ -208,7 +206,7 @@ public class Player {
     }
     
     public boolean useSpecialAttack() {
-        if (specialAttackStun == 0 && onGround && !isKnockedBack && !isInvulnerable) {
+        if (specialAttackStun == 0 && onGround && !isKnockedBack && !isInvulnerable && !isAttacking) {
             isSpecialAttacking = true;
             specialAttackStun = SPECIAL_ATTACK_STUN_MAX;
             return true;
@@ -221,8 +219,6 @@ public class Player {
             if (health < 0) {
                 health = 0;
             }
-            // ダメージフラッシュエフェクト
-            damageFlash = 18;
             
             // 無敵時間開始
             isInvulnerable = true;
@@ -255,19 +251,8 @@ public class Player {
             // 画像を使用して描画
             drawImageCharacter(g);
         } else {
-            // 無敵時間中の点滅効果（幾何学図形プレイヤーの場合）
-            if (isInvulnerable && (invulnerabilityTime / 3) % 2 == 0) {
-                // 点滅中は描画をスキップ
-                return;
-            }
-            
-            // ダメージフラッシュ時の色調整
-            Color currentPrimary = damageFlash > 0 ? Color.RED : primaryColor;
-            Color currentSecondary = damageFlash > 0 ? Color.PINK : secondaryColor;
-            drawCharacter(g, currentPrimary, currentSecondary);
+            drawCharacter(g, primaryColor, secondaryColor);
         }
-        
-        drawAttackEffect(g);
     }
     
     private void drawCharacter(Graphics g, Color primary, Color secondary) {
@@ -392,30 +377,7 @@ public class Player {
     }
     
     private void drawAttackEffect(Graphics g) {
-        if (isAttacking) {
-            // 攻撃エフェクトの描画
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.setStroke(new BasicStroke(12));
-            
-            int effectX = facingRight ? (int)x + WIDTH : (int)x - ATTACK_RANGE;
-            int effectY = (int)y + HEIGHT/4;
-            
-            // 光る効果
-            g.setColor(new Color(255, 255, 0, 150));
-            g.fillOval(effectX, effectY, ATTACK_RANGE, HEIGHT/2);
-            
-            // 稲妻のような線
-            g.setColor(Color.YELLOW);
-            for (int i = 0; i < 5; i++) {
-                int startX = effectX + (int)(Math.random() * ATTACK_RANGE);
-                int startY = effectY + (int)(Math.random() * HEIGHT/2);
-                int endX = startX + (int)(Math.random() * 80 - 40);
-                int endY = startY + (int)(Math.random() * 80 - 40);
-                g.drawLine(startX, startY, endX, endY);
-            }
-            
-            g2d.setStroke(new BasicStroke(4));
-        }
+        // 攻撃エフェクトは削除済み
     }
     
     private void drawHealthBar(Graphics g) {
@@ -517,6 +479,11 @@ public class Player {
             jumpImage = ImageIO.read(new File("image/jump_1_1.jpg"));
             fireImage = ImageIO.read(new File("image/fire_1.jpg"));
             damagedImage = ImageIO.read(new File("image/dagaged_1.jpg"));
+            attackImage1 = ImageIO.read(new File("image/attack_1_1.jpg"));
+            attackImage2 = ImageIO.read(new File("image/attack_1_2.jpg"));
+            attackImage3 = ImageIO.read(new File("image/attack_1_3.jpg"));
+            attackImage4 = ImageIO.read(new File("image/attack_1_4.jpg"));
+            attackImage5 = ImageIO.read(new File("image/attack_1_5.jpg"));
             useImage = true;
             System.out.println("プレイヤー1の画像を正常に読み込みました");
         } catch (IOException e) {
@@ -534,6 +501,30 @@ public class Player {
         if (isInvulnerable && damagedImage != null) {
             // 無敵時間中（ダメージを受けた直後）はダメージ画像を使用
             currentImage = damagedImage;
+        } else if (isAttacking && attackImage1 != null && attackImage2 != null && 
+            attackImage3 != null && attackImage4 != null && attackImage5 != null) {
+            // 攻撃中は攻撃画像を5フレームずつ切り替え（合計25フレーム）
+            int attackFrame = (ATTACK_COOLDOWN_MAX - attackCooldown) / 5;
+            switch (attackFrame) {
+                case 0:
+                    currentImage = attackImage1;
+                    break;
+                case 1:
+                    currentImage = attackImage2;
+                    break;
+                case 2:
+                    currentImage = attackImage3;
+                    break;
+                case 3:
+                    currentImage = attackImage4;
+                    break;
+                case 4:
+                    currentImage = attackImage5;
+                    break;
+                default:
+                    currentImage = attackImage5;
+                    break;
+            }
         } else if (isSpecialAttacking && fireImage != null) {
             // 特殊攻撃中は火の画像を使用
             currentImage = fireImage;
@@ -607,24 +598,19 @@ public class Player {
         int offsetX = (WIDTH - drawWidth) / 2;
         int offsetY = 0;
         
-        // ダメージフラッシュ効果
-        if (damageFlash > 0) {
-            // 赤いフィルターをかける
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-            g.setColor(Color.RED);
-            g.fillRect((int)x + offsetX, (int)y + offsetY, drawWidth, drawHeight);
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-        }
-        
         // 左向きの場合は画像を水平反転して描画
         if (!facingRight) {
             Graphics2D g2d = (Graphics2D) g;
+            // 透過処理を有効にする
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
             g2d.drawImage(currentImage, 
                 (int)x + offsetX + drawWidth, (int)y + offsetY, 
                 -drawWidth, drawHeight, null);
         } else {
-            g.drawImage(currentImage, (int)x + offsetX, (int)y + offsetY, drawWidth, drawHeight, null);
+            Graphics2D g2d = (Graphics2D) g;
+            // 透過処理を有効にする
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
+            g2d.drawImage(currentImage, (int)x + offsetX, (int)y + offsetY, drawWidth, drawHeight, null);
         }
     }
 }
