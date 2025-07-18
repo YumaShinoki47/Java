@@ -2,7 +2,7 @@
 
 Java Swingを使用した2プレイヤー対戦型の2D格闘ゲームです。
 
-![Uploading スクリーンショット 2025-07-19 022017.png…]()
+<img width="1594" height="888" alt="スクリーンショット 2025-07-19 022017" src="https://github.com/user-attachments/assets/d39c41d4-7c8e-4122-b3c9-8fc00e45ded0" />
 
 
 ## 特徴
